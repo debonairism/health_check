@@ -94,7 +94,7 @@ class Penetrator < HealthCheck
 
   def view
     view = @url.path.split('/')[1]
-    view == 'runtime' ? 'Primary' : view
+    view == :runtime ? 'Primary' : view
   end
 
   def region
@@ -109,8 +109,15 @@ class Penetrator < HealthCheck
     category_info.rassoc(unavailable_sub_cat_id(service)).first.upcase
   end
 
-  def service_name
-  #  work on this after
+  def service_error(name)
+    @agent.css('body').css("a[id='#{service(name)}hlServiceType']").text.strip
+  end
+
+  def service(name)
+    service_id = (name['id'])
+    service = /[^_]*$/.match(name['id']).to_s
+    service_id.slice! service
+    service_id
   end
 
   def retry
@@ -118,7 +125,7 @@ class Penetrator < HealthCheck
   end
 
   def single_and_multiple_request_by_url
-
+  # work on this after
   end
 
   def error_message(service)
@@ -128,7 +135,7 @@ class Penetrator < HealthCheck
   def errors
     load_health_check_rules
     errors = unavailable_sub_cat.map do |service|
-      [view, region, web_server, category(service), error_message(service)] unless exempt?(service)
+      [view, region, web_server, service_error(service), category(service), error_message(service)] unless exempt?(service)
     end
     errors.compact
   end
@@ -154,15 +161,15 @@ class Penetrator < HealthCheck
   end
 
   def skip_server
-    [view, region, web_server, 'N/A', "#{@exception}"]
+    [view, region, web_server,'N/A' ,'N/A', "#{@exception}"]
   end
 
   def headers
-    ['View', 'Region', 'Host Server', 'Category Service', 'Error Message']
+    ['View', 'Region', 'Host Server', 'Service Name', 'Service Type', 'Error Message']
   end
 
   def all_errors
-    @errors.flatten.each_slice(5).to_a
+    @errors.flatten.each_slice(6).to_a
   end
 
   def output
@@ -184,3 +191,4 @@ class Penetrator < HealthCheck
   end
 
 end
+
