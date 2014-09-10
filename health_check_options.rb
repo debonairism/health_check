@@ -7,9 +7,10 @@ class HealthCheckOptions < HealthCheck
   def main
     table_output('Views Health Check', health_check_headers, output(main_options))
     option = gets.strip.to_i
-    if validate(option, 'initial')
+    if valid?(option, 'initial')
       main_option(option)
     else
+      error_message(option)
       reload(main)
     end
   end
@@ -24,10 +25,11 @@ class HealthCheckOptions < HealthCheck
   def view
     table_output('Which view server would you like to check?', health_check_headers, output(view_options))
     option = gets.strip.to_i
-    if validate(option, 'view')
+    if valid?(option, 'view')
       @view = view_option(option)
       region
     else
+      error_message(option)
       reload(view)
     end
   end
@@ -46,9 +48,10 @@ class HealthCheckOptions < HealthCheck
   def region
     table_output('Which region would you like to check?', health_check_headers, output(region_options))
     option = gets.strip.to_i
-    if validate(option, 'region')
+    if valid?(option, 'region')
       @region = region_option(option)
     else
+      error_message(option)
       reload(region)
     end
   end
@@ -92,12 +95,11 @@ class HealthCheckOptions < HealthCheck
     abort(message)
   end
 
-  def reload(region, message = 'WRONG OPTION HAS BEEN ENTERED. TRY AGAIN.')
-    puts message
+  def reload(region)
     region
   end
 
-  def validate(option, type)
+  def valid?(option, type)
     numerical?(option) && correct_value?(option, type)
   end
 
@@ -111,6 +113,18 @@ class HealthCheckOptions < HealthCheck
     response = entered.between?(1,6)        if type == 'view'
     response = entered.between?(1,6)        if type == 'region'
     response
+  end
+
+  def error_message(option)
+    puts "THE INPUT #{underline_output(option)} IS INCORRECT. PLEASE TRY AGAIN."
+  end
+
+  def colorize(text, color_code)
+    "\e[#{color_code}m#{text}\e[0m"
+  end
+
+  def underline_output(text)
+    colorize(text, 4)
   end
 
 end

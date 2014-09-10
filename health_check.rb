@@ -22,7 +22,9 @@ class HealthCheck
     Penetrator.new(@server_urls, @options)
   end
 
-  def table_output(title, header, row)
+  def table_output(title, header, row, message = nil)
+    puts message unless message.nil?
+
     table = Terminal::Table.new title: title,
                                 headings: header,
                                 rows: row
@@ -30,7 +32,8 @@ class HealthCheck
                                 border_i: '+',
                                 padding_left: 1,
                                 padding_right: 1}
-    puts table
+
+    row.empty? ? (puts 'There are no errors on the page') : (puts table)
   end
 
   def clear_screen

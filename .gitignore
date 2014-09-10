@@ -5,7 +5,7 @@
 #   git config --global core.excludesfile '~/.gitignore_global'
 
 #Ignore json file
-*.health_check_url.json
+*.json
 
 # Ignore Mac files
 *.DS_Store

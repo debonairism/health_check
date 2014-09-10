@@ -12,7 +12,7 @@ class Penetrator < HealthCheck
       headless_web_page(url)
       errors rescue skip_server
     end
-    table_output('Penetrator', headers, output)
+    table_output('Penetrator', headers, output) unless @errors.empty?
     HealthCheck.new
   end
 
@@ -106,11 +106,19 @@ class Penetrator < HealthCheck
   end
 
   def category(service)
-    category_info.rassoc(unavailable_sub_cat_id(service)).first
+    category_info.rassoc(unavailable_sub_cat_id(service)).first.upcase
   end
 
   def service_name
   #  work on this after
+  end
+
+  def retry
+  #  work on this after
+  end
+
+  def single_and_multiple_request_by_url
+
   end
 
   def error_message(service)
@@ -118,9 +126,31 @@ class Penetrator < HealthCheck
   end
 
   def errors
-    unavailable_sub_cat.map do |service|
-      [view, region, web_server, category(service), error_message(service)]
+    load_health_check_rules
+    errors = unavailable_sub_cat.map do |service|
+      [view, region, web_server, category(service), error_message(service)] unless exempt?(service)
     end
+    errors.compact
+  end
+
+  def rules_file
+    File.dirname(__FILE__) + '/health_check_rules.json'
+  end
+
+  def load_health_check_rules
+    @rules = JSON.parse(read_json_file(rules_file))
+  end
+
+  def read_json_file(files)
+    File.read(files)
+  end
+
+  def rules
+    @rules.values.first.map {|rule| rule.upcase}
+  end
+
+  def exempt?(service)
+    rules.include? category(service)
   end
 
   def skip_server
