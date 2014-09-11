@@ -18,7 +18,8 @@ class HealthCheckOptions < HealthCheck
   def main_option(option)
     case option
       when 1 then view
-      when 2 then exit
+      when 2 then pass_urls
+      when 3 then exit
     end
   end
 
@@ -67,12 +68,22 @@ class HealthCheckOptions < HealthCheck
     end
   end
 
+  def pass_urls
+    puts "Please enter URL's separated by commas"
+    option = gets.strip
+    if option.empty?
+      error_message('nothing entered')
+      reload(pass_urls)
+    end
+    @passed = option.split(',')
+  end
+
   def health_check_headers
     %w(Option Explanation)
   end
 
   def main_options
-    ['OUTPUT HEALTH CHECK ERRORS', 'EXIT']
+    ['OUTPUT HEALTH CHECK FROM JSON', 'PASS IN EXPLICIT URLS', 'EXIT']
   end
 
   def view_options
@@ -88,7 +99,7 @@ class HealthCheckOptions < HealthCheck
   end
 
   def urls
-    {search: {view_options: @view, region: @region}}
+    {search: {view_options: @view, region: @region, passed: @passed}}
   end
 
   def exit(message = 'PROGRAM HAS BEEN TERMINATED!')
@@ -109,7 +120,7 @@ class HealthCheckOptions < HealthCheck
 
   def correct_value?(entered, type)
     response = false
-    response = entered.between?(1,2)        if type == 'initial'
+    response = entered.between?(1,3)        if type == 'initial'
     response = entered.between?(1,6)        if type == 'view'
     response = entered.between?(1,6)        if type == 'region'
     response
