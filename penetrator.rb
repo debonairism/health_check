@@ -8,10 +8,12 @@ class Penetrator < HealthCheck
 
   def initialize(servers, options)
     clear_screen
+
     @errors = Parallel.map(servers, :in_processes => 4, :progress => "Penetrating #{options.values}") do |url|
       headless_web_page(url)
-      errors rescue skip_server
+      wrong_title? ? wrong_server(url) : errors rescue skip_server
     end
+
     table_output('Penetrator', headers, output) unless @errors.empty?
     HealthCheck.new
   end
@@ -23,25 +25,27 @@ class Penetrator < HealthCheck
   end
 
   def open(url)
+    tries ||= 2
     begin
       @browser.goto url
       put_into_nokogiri(@browser.html)
     rescue Exception => error
+      retry unless (tries -= 1).zero?
       @exception = error
     end
   end
 
-  def put_into_nokogiri(url)
-    @agent = Nokogiri::HTML("#{url}")
+  def put_into_nokogiri(html)
+    @agent = Nokogiri::HTML("#{html}")
     @browser.close
   end
 
   def title
-    @agent.title.strip.downcase
+    @agent.title.strip.downcase rescue nil
   end
 
-  def service_unavailable?
-    title == ''
+  def wrong_title?
+    title != 'reuters explorer health status page'
   end
 
   def all_unavailable
@@ -120,10 +124,6 @@ class Penetrator < HealthCheck
     service_id
   end
 
-  def retry
-  #  work on this after
-  end
-
   def single_and_multiple_request_by_url
   # work on this after
   end
@@ -164,6 +164,10 @@ class Penetrator < HealthCheck
     [view, region, web_server,'N/A' ,'N/A', "#{@exception}"]
   end
 
+  def wrong_server(url)
+    ['N/A', 'N/A', url, 'N/A', 'N/A', 'Incorrect URL has been provided. Please try again']
+  end
+
   def headers
     ['View', 'Region', 'Host Server', 'Service Name', 'Service Type', 'Error Message']
   end
@@ -172,12 +176,25 @@ class Penetrator < HealthCheck
     @errors.flatten.each_slice(6).to_a
   end
 
+  def url?(string)
+    uri = URI.parse(string)
+    %w( http https ).include?(uri.scheme)
+  rescue
+    false
+  end
+
   def output
     all_errors.map do |row|
-      row.map do |test|
-        word_wrap(test, 70)
+      row.map do |string|
+        url?(string) ? word_wrap_url(string) : word_wrap(string, 70)
       end
     end
+  end
+
+  def word_wrap_url(string)
+    url = string.scan(/.{1,70}/)
+    separated_url = url.map {|part| part + "\n"}
+    separated_url.join
   end
 
   def word_wrap (text, number)
