@@ -8,9 +8,14 @@ class HealthCheck
   require 'terminal-table'
 
   def initialize
-    @options = HealthCheckOptions.new.urls
+    argument_passed ||= ARGV[0]
+    argument_passed.nil? ? @options = HealthCheckOptions.new.urls : @options = all_urls
     get_server_urls
     penetrate_urls
+  end
+
+  def all_urls
+    {search: {view_options: 'backout_views', region: 'apac'}}
   end
 
   def get_server_urls
@@ -19,7 +24,7 @@ class HealthCheck
   end
 
   def penetrate_urls
-    Penetrator.new(@server_urls, @options)
+    Penetrator.new(@server_urls, @options, ARGV[0])
   end
 
   def table_output(title, header, row, message = nil)
