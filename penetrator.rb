@@ -5,15 +5,18 @@ class Penetrator < HealthCheck
   require 'watir-webdriver'
   require 'parallel'
   require 'phantomjs'
+  require 'logger'
 
   def initialize(servers, options)
     clear_screen
+    logging
 
     @errors = Parallel.map(servers, :in_processes => 4, :progress => "Penetrating #{options.values}") do |url|
       headless_web_page(url)
       wrong_title? ? wrong_server(url) : errors rescue skip_server
     end
 
+    all_errors.empty? ? passing_log('There are no errors on the page') : failing_log(all_errors.to_s)
     table_output('Penetrator', headers, output) unless @errors.empty?
     HealthCheck.new
   end
@@ -124,10 +127,6 @@ class Penetrator < HealthCheck
     service_id
   end
 
-  def single_and_multiple_request_by_url
-  # work on this after
-  end
-
   def error_message(service)
     unavailable_sub_cat_status(service)
   end
@@ -165,7 +164,7 @@ class Penetrator < HealthCheck
   end
 
   def wrong_server(url)
-    ['N/A', 'N/A', url, 'N/A', 'N/A', 'Incorrect URL has been provided. Please try again']
+    ['N/A', 'N/A', 'N/A', url, 'N/A', 'Incorrect URL has been provided. Please try again']
   end
 
   def headers
@@ -175,6 +174,26 @@ class Penetrator < HealthCheck
   def all_errors
     @errors.flatten.each_slice(6).to_a
   end
+
+  def logging
+    @log = Logger.new('health_check.log', 30)
+    @log.level = Logger::DEBUG
+    @log.progname = 'Health Check Log'
+    @log.formatter = proc do |severity, datetime, progname, msg|
+      "#{severity} | #{datetime.strftime('%Y-%m-%d %H:%M:%S.%L')} |  #{msg}\n"
+    end
+  end
+
+  def failing_log(message)
+    @log.error(all_errors)
+    puts Time.now.to_s + ' | ' + message
+  end
+
+  def passing_log(message)
+    @log.info(message)
+    puts Time.now.to_s + ' | ' + message
+  end
+
 
   def url?(string)
     uri = URI.parse(string)
@@ -186,13 +205,13 @@ class Penetrator < HealthCheck
   def output
     all_errors.map do |row|
       row.map do |string|
-        url?(string) ? word_wrap_url(string) : word_wrap(string, 70)
+        url?(string) ? word_wrap_url(string) : word_wrap(string, 50)
       end
     end
   end
 
   def word_wrap_url(string)
-    url = string.scan(/.{1,70}/)
+    url = string.scan(/.{1,50}/)
     separated_url = url.map {|part| part + "\n"}
     separated_url.join
   end
