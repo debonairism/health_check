@@ -29,6 +29,13 @@
         - Added service name to the error page
         - Added retry if page returns 404 error
         - Added options to pass the URL directly from the script
+
+###Core Bump 0.2  --> 0.2.1
+    
+    - CHANGELOG:
+        - Added in log that will clear in 30 days (health_check.log)       
+        - Pass in any arguments and it will run all and exit the script
+        
     
 ###Features to come  
   
@@ -38,4 +45,4 @@
         - Rspec, Cucumber and friends 
     
 ####Version:
-Beta - Version 0.2
+Beta - Version 0.2.1

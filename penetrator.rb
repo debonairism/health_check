@@ -7,7 +7,7 @@ class Penetrator < HealthCheck
   require 'phantomjs'
   require 'logger'
 
-  def initialize(servers, options)
+  def initialize(servers, options, argument)
     clear_screen
     logging
 
@@ -18,7 +18,7 @@ class Penetrator < HealthCheck
 
     all_errors.empty? ? passing_log('There are no errors on the page') : failing_log(all_errors.to_s)
     table_output('Penetrator', headers, output) unless @errors.empty?
-    HealthCheck.new
+    HealthCheck.new if argument.empty?
   end
 
   def headless_web_page(url)
