@@ -43,6 +43,8 @@
         - maybe package into a gem 
     - TDD
         - Rspec, Cucumber and friends 
+    - Refactoring
+        - Lots need to be done
     
 ####Version:
 Beta - Version 0.2.1
