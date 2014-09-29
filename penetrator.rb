@@ -9,14 +9,15 @@ class Penetrator < HealthCheck
 
   def initialize(servers, options, argument)
     clear_screen
-    logging
 
     @errors = Parallel.map(servers, :in_processes => 4, :progress => "Penetrating #{options.values}") do |url|
       headless_web_page(url)
       wrong_title? ? wrong_server(url) : errors rescue skip_server
     end
 
+    logging
     all_errors.empty? ? passing_log('There are no errors on the page') : failing_log(all_errors.to_s)
+
     table_output('Penetrator', headers, output) unless @errors.empty?
     HealthCheck.new if argument.empty?
   end
@@ -24,10 +25,10 @@ class Penetrator < HealthCheck
   def headless_web_page(url)
     @browser = Watir::Browser.new :phantomjs
     @url = URI(url)
-    open(url)
+    open_browser(url)
   end
 
-  def open(url)
+  def open_browser(url)
     tries ||= 2
     begin
       @browser.goto url
@@ -185,15 +186,20 @@ class Penetrator < HealthCheck
   end
 
   def failing_log(message)
-    @log.error(all_errors)
+    @log.error(message)
     puts Time.now.to_s + ' | ' + message
+    close_log
   end
 
   def passing_log(message)
     @log.info(message)
     puts Time.now.to_s + ' | ' + message
+    close_log
   end
 
+  def close_log
+    @log.close
+  end
 
   def url?(string)
     uri = URI.parse(string)
@@ -227,4 +233,3 @@ class Penetrator < HealthCheck
   end
 
 end
-
