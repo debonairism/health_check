@@ -101,8 +101,7 @@ class Penetrator < HealthCheck
   end
 
   def view
-    view = @url.path.split('/')[1]
-    view == :runtime ? 'Primary' : view
+    @url.path.split('/')[1]
   end
 
   def region
