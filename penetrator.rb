@@ -16,10 +16,10 @@ class Penetrator < HealthCheck
     end
 
     logging
-    all_errors.empty? ? passing_log('There are no errors on the page') : failing_log(all_errors.to_s)
+    all_errors.empty? ? passing_log('There are no errors on the page') : failing_log
 
     table_output('Penetrator', headers, output) unless @errors.empty?
-    HealthCheck.new if argument.empty?
+    HealthCheck.new if argument.nil?
   end
 
   def headless_web_page(url)
@@ -175,6 +175,12 @@ class Penetrator < HealthCheck
     @errors.flatten.each_slice(6).to_a
   end
 
+  def errors_to_json
+    all_errors.map do |errors|
+      Hash[headers.zip(errors)]
+    end
+  end
+
   def logging
     @log = Logger.new('health_check.log', 30)
     @log.level = Logger::DEBUG
@@ -184,15 +190,13 @@ class Penetrator < HealthCheck
     end
   end
 
-  def failing_log(message)
-    @log.error(all_errors)
-    puts Time.now.to_s + ' | ' + message
+  def failing_log
+    @log.error(errors_to_json)
     close_log
   end
 
   def passing_log(message)
     @log.info(message)
-    puts Time.now.to_s + ' | ' + message
     close_log
   end
 
