@@ -186,7 +186,7 @@ class Penetrator < HealthCheck
   end
 
   def failing_log(message)
-    @log.error(message)
+    @log.error(all_errors)
     puts Time.now.to_s + ' | ' + message
     close_log
   end
